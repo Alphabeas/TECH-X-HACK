@@ -36,3 +36,31 @@ button {
 .dashboard-page [data-section-title] {
     margin-top: 4.5rem;
 }
+
+.dashboard-upload-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 86px 20px 24px;
+}
+
+.dashboard-upload-top {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4px 0 2px;
+    margin-bottom: 10px;
+}
+
+.dashboard-upload-title {
+    margin: 0;
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: 1.06;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    text-align: center;
+}
+
+.dashboard-upload-content {
+    margin-top: 0;
+}

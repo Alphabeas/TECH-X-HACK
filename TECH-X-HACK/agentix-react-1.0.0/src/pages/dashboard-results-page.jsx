@@ -133,7 +133,7 @@ export default function DashboardResultsPage() {
                                 <Link to="/dashboard/visualizations" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                     Open visualizations
                                 </Link>
-                                <Link to="/dashboard#settings" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                                <Link to="/dashboard/settings" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                                     Open settings
                                 </Link>
                             </div>

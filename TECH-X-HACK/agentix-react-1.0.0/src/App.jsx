@@ -3,11 +3,13 @@ import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import Footer from "./components/footer";
 import LenisScroll from "./components/lenis-scroll";
 import Navbar from "./components/navbar";
+import ChatbotDrawer from "./components/chatbot-drawer";
 import HomePage from "./pages/home-page";
 import AuthPage from "./pages/auth-page";
 import DashboardPage from "./pages/dashboard-page";
 import DashboardResultsPage from "./pages/dashboard-results-page";
 import DashboardVisualizationPage from "./pages/dashboard-visualization-page";
+import DashboardSettingsPage from "./pages/dashboard-settings-page";
 import OnboardingPage from "./pages/onboarding-page";
 import { auth } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -87,8 +89,17 @@ export default function Page() {
                         </RequireAuth>
                     )}
                 />
+                <Route
+                    path="/dashboard/settings"
+                    element={(
+                        <RequireAuth isAuthed={isAuthed} isReady={isAuthReady}>
+                            <DashboardSettingsPage />
+                        </RequireAuth>
+                    )}
+                />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <ChatbotDrawer isAuthed={isAuthed} />
             <Footer />
         </>
     );

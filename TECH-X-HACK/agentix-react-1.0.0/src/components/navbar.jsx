@@ -14,9 +14,10 @@ export default function Navbar({ isAuthed, onLogout }) {
             { to: "/dashboard", text: "Upload" },
             { to: "/dashboard/results", text: "Evaluations" },
             { to: "/dashboard/visualizations", text: "Visualizations" },
-            { to: "/dashboard#settings", text: "Settings" },
+            { to: "/dashboard/settings", text: "Settings" },
         ]
         : [
+            ...(isAuthed ? [{ to: "/dashboard", text: "Dashboard" }] : []),
             { to: "/#home-about", hash: "#home-about", text: "About" },
             { to: "/#home-how", hash: "#home-how", text: "How it works" },
             { to: "/#home-interactive", hash: "#home-interactive", text: "Try it" },
@@ -26,7 +27,7 @@ export default function Navbar({ isAuthed, onLogout }) {
 
     return (
         <>
-            <motion.nav className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 md:px-10 lg:px-14 xl:px-20 backdrop-blur bg-[#f7f4ef]/80"
+            <motion.nav className="sticky top-0 z-50 flex items-center w-full h-16 px-4 md:px-10 lg:px-14 xl:px-20 backdrop-blur bg-[#f7f4ef]/80 relative"
                 initial={{ y: -100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}
@@ -41,16 +42,16 @@ export default function Navbar({ isAuthed, onLogout }) {
                 </Link>
 
                 {showNavLinks && (
-                    <div className="hidden lg:flex items-center gap-4 text-[13px] text-slate-600 transition duration-500">
+                    <div className="hidden lg:flex items-center gap-5 text-[13px] text-slate-600 transition duration-500 absolute left-1/2 -translate-x-1/2">
                         {navlinks.map((link) => (
                             isHomeRoute
                                 ? (
-                                    <a key={link.to} href={link.hash} className="hover:text-slate-900 transition">
+                                    <a key={link.to} href={link.hash || undefined} className="hover:text-slate-900 transition font-medium">
                                         {link.text}
                                     </a>
                                 )
                                 : (
-                                    <Link key={link.to} to={link.to} className="hover:text-slate-900 transition">
+                                    <Link key={link.to} to={link.to} className="hover:text-slate-900 transition font-medium">
                                         {link.text}
                                     </Link>
                                 )
@@ -58,18 +59,9 @@ export default function Navbar({ isAuthed, onLogout }) {
                     </div>
                 )}
 
-                <div className="hidden lg:flex items-center gap-2">
+                <div className="hidden lg:flex items-center gap-2 ml-auto">
                     {isAuthed ? (
                         <>
-                            <Link className="px-4 py-2 bg-slate-900 hover:bg-slate-800 transition text-white rounded-md active:scale-95 text-xs" to="/dashboard">
-                                Upload
-                            </Link>
-                            <Link className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs" to="/dashboard/results">
-                                Results
-                            </Link>
-                            <Link className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs" to="/dashboard/visualizations">
-                                Visuals
-                            </Link>
                             <button onClick={onLogout} className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs">
                                 Log out
                             </button>
