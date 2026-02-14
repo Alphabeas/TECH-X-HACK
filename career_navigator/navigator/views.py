@@ -16,7 +16,7 @@ from .services.gap_analyzer import (
     calculate_readiness_estimate,
 )
 from .services.planner import generate_30_day_plan
-from .services.role_data import ROLE_SKILL_FALLBACK
+from .services.role_data import ROLE_SKILL_FALLBACK, ROLE_ROADMAP_FALLBACK
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -138,7 +138,11 @@ def _extract_skills_fallback(combined_text, github_summary):
     }
 
 
-def _build_fallback_plan(missing_skills, experience_level, hours_per_day):
+def _build_fallback_plan(missing_skills, experience_level, hours_per_day, dream_role):
+    role_plan = ROLE_ROADMAP_FALLBACK.get(dream_role)
+    if role_plan:
+        return role_plan
+
     technical = (missing_skills or {}).get("missing_technical", [])[:8]
     soft = (missing_skills or {}).get("missing_soft", [])[:4]
 
@@ -269,11 +273,11 @@ def analyze_profile(request):
         plan = generate_30_day_plan(missing_skills, experience_level, hours_per_day)
     except Exception as exc:
         warnings.append(f"AI planner unavailable ({str(exc)}). Used fallback 4-week plan.")
-        plan = _build_fallback_plan(missing_skills, experience_level, hours_per_day)
+        plan = _build_fallback_plan(missing_skills, experience_level, hours_per_day, dream_role)
 
     if isinstance(plan, dict) and plan.get("error"):
         warnings.append(f"AI planner returned an error ({plan.get('error')}). Used fallback 4-week plan.")
-        plan = _build_fallback_plan(missing_skills, experience_level, hours_per_day)
+        plan = _build_fallback_plan(missing_skills, experience_level, hours_per_day, dream_role)
 
     roadmap = []
     for week_key, content in plan.items():
