@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
@@ -125,6 +126,17 @@ export default function DashboardResultsPage() {
                             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Step 2 · Evaluations & metrics</p>
                             <h1 className="font-display text-3xl text-slate-900 mt-3">Your progress, {displayName}</h1>
                             <p className="text-sm text-slate-600 mt-2">Real metrics generated from your uploaded/imported profile data.</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                <Link to="/dashboard" className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800">
+                                    Back to upload
+                                </Link>
+                                <Link to="/dashboard/visualizations" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                                    Open visualizations
+                                </Link>
+                                <Link to="/dashboard#settings" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                                    Open settings
+                                </Link>
+                            </div>
                         </div>
                         {analysis && !analysis.error && (
                             <div className="flex flex-wrap gap-3">

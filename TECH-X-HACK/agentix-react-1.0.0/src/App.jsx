@@ -7,6 +7,7 @@ import HomePage from "./pages/home-page";
 import AuthPage from "./pages/auth-page";
 import DashboardPage from "./pages/dashboard-page";
 import DashboardResultsPage from "./pages/dashboard-results-page";
+import DashboardVisualizationPage from "./pages/dashboard-visualization-page";
 import OnboardingPage from "./pages/onboarding-page";
 import { auth } from "./firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -75,6 +76,14 @@ export default function Page() {
                     element={(
                         <RequireAuth isAuthed={isAuthed} isReady={isAuthReady}>
                             <DashboardResultsPage />
+                        </RequireAuth>
+                    )}
+                />
+                <Route
+                    path="/dashboard/visualizations"
+                    element={(
+                        <RequireAuth isAuthed={isAuthed} isReady={isAuthReady}>
+                            <DashboardVisualizationPage />
                         </RequireAuth>
                     )}
                 />

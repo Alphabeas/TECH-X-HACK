@@ -3,18 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { auth } from "../firebase";
 import { saveUserProfile } from "../services/profile";
-
-const JOB_OPTIONS = [
-    "Product Analyst",
-    "Data Analyst",
-    "Frontend Engineer",
-    "Backend Engineer",
-    "Full Stack Developer",
-    "Machine Learning Engineer",
-    "DevOps Engineer",
-    "UI/UX Designer",
-    "Product Manager",
-];
+import { JOB_OPTIONS } from "../constants/job-options";
 
 export default function OnboardingPage() {
     const navigate = useNavigate();

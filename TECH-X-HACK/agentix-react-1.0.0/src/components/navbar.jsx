@@ -1,16 +1,29 @@
 import { useState } from "react";
 import { MenuIcon, XIcon } from "lucide-react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Navbar({ isAuthed, onLogout }) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const navlinks = [
-        { href: "#workflow", text: "Workflow" },
-        { href: "#integrations", text: "Integrations" },
-        { href: "#analytics", text: "Analytics" },
-        { href: "#roadmap", text: "Roadmap" },
-    ];
+    const { pathname } = useLocation();
+    const isDashboardRoute = pathname.startsWith("/dashboard");
+    const isHomeRoute = pathname === "/";
+
+    const navlinks = isDashboardRoute
+        ? [
+            { to: "/dashboard", text: "Upload" },
+            { to: "/dashboard/results", text: "Evaluations" },
+            { to: "/dashboard/visualizations", text: "Visualizations" },
+            { to: "/dashboard#settings", text: "Settings" },
+        ]
+        : [
+            { to: "/#home-about", hash: "#home-about", text: "About" },
+            { to: "/#home-how", hash: "#home-how", text: "How it works" },
+            { to: "/#home-interactive", hash: "#home-interactive", text: "Try it" },
+        ];
+
+    const showNavLinks = isDashboardRoute || isHomeRoute;
+
     return (
         <>
             <motion.nav className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 md:px-10 lg:px-14 xl:px-20 backdrop-blur bg-[#f7f4ef]/80"
@@ -27,12 +40,20 @@ export default function Navbar({ isAuthed, onLogout }) {
                     </div>
                 </Link>
 
-                {isAuthed && (
+                {showNavLinks && (
                     <div className="hidden lg:flex items-center gap-4 text-[13px] text-slate-600 transition duration-500">
                         {navlinks.map((link) => (
-                            <a key={link.href} href={link.href} className="hover:text-slate-900 transition">
-                                {link.text}
-                            </a>
+                            isHomeRoute
+                                ? (
+                                    <a key={link.to} href={link.hash} className="hover:text-slate-900 transition">
+                                        {link.text}
+                                    </a>
+                                )
+                                : (
+                                    <Link key={link.to} to={link.to} className="hover:text-slate-900 transition">
+                                        {link.text}
+                                    </Link>
+                                )
                         ))}
                     </div>
                 )}
@@ -41,7 +62,13 @@ export default function Navbar({ isAuthed, onLogout }) {
                     {isAuthed ? (
                         <>
                             <Link className="px-4 py-2 bg-slate-900 hover:bg-slate-800 transition text-white rounded-md active:scale-95 text-xs" to="/dashboard">
-                                Dashboard
+                                Upload
+                            </Link>
+                            <Link className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs" to="/dashboard/results">
+                                Results
+                            </Link>
+                            <Link className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs" to="/dashboard/visualizations">
+                                Visuals
                             </Link>
                             <button onClick={onLogout} className="hover:bg-slate-200 transition px-4 py-2 border border-slate-300 rounded-md active:scale-95 text-xs">
                                 Log out
@@ -63,10 +90,18 @@ export default function Navbar({ isAuthed, onLogout }) {
                 </button>
             </motion.nav>
             <div className={`fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur flex flex-col items-center justify-center text-lg gap-8 lg:hidden transition-transform duration-400 ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-                {isAuthed && navlinks.map((link) => (
-                    <a key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)} className="text-white">
-                        {link.text}
-                    </a>
+                {showNavLinks && navlinks.map((link) => (
+                    isHomeRoute
+                        ? (
+                            <a key={link.to} href={link.hash} onClick={() => setIsMenuOpen(false)} className="text-white">
+                                {link.text}
+                            </a>
+                        )
+                        : (
+                            <Link key={link.to} to={link.to} onClick={() => setIsMenuOpen(false)} className="text-white">
+                                {link.text}
+                            </Link>
+                        )
                 ))}
                 {!isAuthed && (
                     <>

@@ -6,6 +6,7 @@ import { auth } from "../firebase";
 import SectionTitle from "../components/section-title";
 import { callFunction } from "../services/functions-api";
 import { getUserProfile, saveUserLatestAnalysis } from "../services/profile";
+import { JOB_OPTIONS } from "../constants/job-options";
 
 export default function IntegrationsSection() {
     const navigate = useNavigate();
@@ -44,7 +45,8 @@ export default function IntegrationsSection() {
 
             try {
                 const profile = await getUserProfile(uid);
-                setDreamRole(profile?.dreamRole || "");
+                const role = profile?.dreamRole || "";
+                setDreamRole(JOB_OPTIONS.includes(role) ? role : "");
                 if (profile?.latestAnalysis) {
                     setLatestAnalysis(profile.latestAnalysis);
                     localStorage.setItem(storageKey, JSON.stringify(profile.latestAnalysis));
@@ -75,11 +77,15 @@ export default function IntegrationsSection() {
 
     const handleGitHubPublicImport = async () => {
         if (!githubUsername.trim()) return;
+        if (!JOB_OPTIONS.includes(dreamRole)) {
+            setStatus("Select your predefined target role in Settings or Onboarding first.");
+            return;
+        }
         setIsBusy(true);
         try {
             const response = await callFunction("/analyze-profile/", {
                 method: "POST",
-                body: JSON.stringify({ github_username: githubUsername.trim(), ...(dreamRole ? { dream_role: dreamRole } : {}) }),
+                body: JSON.stringify({ github_username: githubUsername.trim(), dream_role: dreamRole }),
             });
             persistAndOpenResults(response);
             setStatus("GitHub public data imported and analyzed.");
@@ -101,6 +107,10 @@ export default function IntegrationsSection() {
             setStatus("Please log in again to upload a resume.");
             return;
         }
+        if (!JOB_OPTIONS.includes(dreamRole)) {
+            setStatus("Select your predefined target role in Settings or Onboarding first.");
+            return;
+        }
         setIsBusy(true);
         try {
             const reader = new FileReader();
@@ -114,7 +124,7 @@ export default function IntegrationsSection() {
             });
             const response = await callFunction("/analyze-profile/", {
                 method: "POST",
-                body: JSON.stringify({ resume_file_base64: fileData, ...(dreamRole ? { dream_role: dreamRole } : {}) }),
+                body: JSON.stringify({ resume_file_base64: fileData, dream_role: dreamRole }),
             });
             persistAndOpenResults(response);
             setStatus("Resume uploaded, parsed, and analyzed.");
