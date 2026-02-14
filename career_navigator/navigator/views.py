@@ -52,43 +52,6 @@ def fetch_github_summary(username):
     }
 
 
-def fetch_linkedin_summary(access_token):
-    if not access_token:
-        return {}
-
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Accept": "application/json",
-    }
-
-    profile_response = requests.get("https://api.linkedin.com/v2/me", headers=headers, timeout=12)
-    profile_response.raise_for_status()
-    profile = profile_response.json() or {}
-
-    email = None
-    try:
-        email_response = requests.get(
-            "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))",
-            headers=headers,
-            timeout=12,
-        )
-        if email_response.ok:
-            elements = (email_response.json() or {}).get("elements", [])
-            if elements:
-                email = ((elements[0] or {}).get("handle~") or {}).get("emailAddress")
-    except Exception:
-        email = None
-
-    full_name = " ".join(filter(None, [profile.get("localizedFirstName"), profile.get("localizedLastName")])).strip()
-    return {
-        "id": profile.get("id"),
-        "fullName": full_name,
-        "headline": profile.get("headline") or "",
-        "email": email,
-        "rawProfile": profile,
-    }
-
-
 KEYWORD_SKILLS = {
     "technical": [
         "python", "java", "javascript", "typescript", "react", "node", "sql", "django", "flask", "api",
@@ -190,6 +153,40 @@ def _build_fallback_plan(missing_skills, experience_level, hours_per_day, dream_
     }
 
 
+def _personalize_plan_with_gaps(plan, missing_skills):
+    if not isinstance(plan, dict):
+        return plan
+
+    missing_technical = list((missing_skills or {}).get("missing_technical", []))
+    missing_tools = list((missing_skills or {}).get("missing_tools", []))
+    missing_soft = list((missing_skills or {}).get("missing_soft", []))
+
+    gap_targets = [
+        *(missing_technical[:3]),
+        *(missing_tools[:2]),
+        *(missing_soft[:2]),
+    ]
+
+    if not gap_targets:
+        return plan
+
+    weeks = ["week_1", "week_2", "week_3", "week_4"]
+    for index, week_key in enumerate(weeks):
+        if week_key not in plan or not isinstance(plan[week_key], dict):
+            continue
+
+        target_skill = gap_targets[index % len(gap_targets)]
+        tasks = list(plan[week_key].get("tasks") or [])
+
+        recommendation = f"Close gap: practice and demonstrate {target_skill} in a mini deliverable"
+        if not any(target_skill.lower() in str(task).lower() for task in tasks):
+            tasks.append(recommendation)
+
+        plan[week_key]["tasks"] = tasks
+
+    return plan
+
+
 @api_view(["GET"])
 def health_check(request):
     return Response({"message": "Career Navigator API Running"})
@@ -199,8 +196,6 @@ def health_check(request):
 def analyze_profile(request):
     payload = request.data
     dream_role = payload.get("dream_role") or "Product Analyst"
-    linkedin_text = payload.get("linkedin_text") or ""
-    linkedin_access_token = payload.get("linkedin_access_token") or ""
     resume_text = payload.get("resume_text") or ""
     resume_file = payload.get("resume_file_base64")
     github_username = payload.get("github_username")
@@ -211,8 +206,8 @@ def analyze_profile(request):
     experience_level = payload.get("experience_level") or "Intermediate"
     warnings = []
 
-    if not any([linkedin_text.strip(), linkedin_access_token.strip(), resume_text.strip(), resume_file, (github_username or "").strip()]):
-        return Response({"error": "Provide at least one input: github_username, linkedin_access_token, linkedin_text, resume_text, or resume_file_base64."}, status=400)
+    if not any([resume_text.strip(), resume_file, (github_username or "").strip()]):
+        return Response({"error": "Provide at least one input: github_username, resume_text, or resume_file_base64."}, status=400)
 
     if resume_file:
         try:
@@ -227,18 +222,8 @@ def analyze_profile(request):
         warnings.append(f"GitHub import failed: {str(exc)}")
         github_summary = {}
 
-    linkedin_summary = {}
-    if linkedin_access_token.strip():
-        try:
-            linkedin_summary = fetch_linkedin_summary(linkedin_access_token.strip())
-        except Exception as exc:
-            warnings.append(f"LinkedIn API import failed: {str(exc)}")
-            linkedin_summary = {}
-
     combined_text = "\n".join([
         resume_text,
-        linkedin_text,
-        json.dumps(linkedin_summary),
         json.dumps(github_summary),
     ])
 
@@ -279,6 +264,8 @@ def analyze_profile(request):
         warnings.append(f"AI planner returned an error ({plan.get('error')}). Used fallback 4-week plan.")
         plan = _build_fallback_plan(missing_skills, experience_level, hours_per_day, dream_role)
 
+    plan = _personalize_plan_with_gaps(plan, missing_skills)
+
     roadmap = []
     for week_key, content in plan.items():
         roadmap.append({
@@ -299,7 +286,6 @@ def analyze_profile(request):
     return Response({
         "dream_role": dream_role,
         "github_summary": github_summary,
-        "linkedin_summary": linkedin_summary,
         "user_skills": user_skills,
         "role_skills": role_skills,
         "missing_skills": missing_skills,

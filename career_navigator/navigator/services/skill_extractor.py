@@ -1,5 +1,4 @@
-import json
-from .groq_client import call_groq
+from .groq_client import call_llm, parse_llm_json
 
 
 def extract_user_skills(resume_text):
@@ -20,11 +19,11 @@ def extract_user_skills(resume_text):
     {resume_text}
     """
 
-    response = call_groq(prompt)
+    response = call_llm(prompt)
 
     try:
-        skills = json.loads(response)
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON from Groq"}
+        skills = parse_llm_json(response)
+    except ValueError:
+        return {"error": "Invalid JSON from LLM"}
 
     return skills

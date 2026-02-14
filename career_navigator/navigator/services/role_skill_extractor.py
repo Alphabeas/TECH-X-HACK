@@ -1,5 +1,4 @@
-import json
-from .groq_client import call_groq
+from .groq_client import call_llm, parse_llm_json
 from .dataset_loader import get_role_descriptions
 
 # In-memory cache
@@ -27,12 +26,12 @@ def extract_role_skills(role_name):
     {descriptions[:8000]}
     """
 
-    response = call_groq(prompt)
+    response = call_llm(prompt)
 
     try:
-        skills = json.loads(response)
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON from Groq"}
+        skills = parse_llm_json(response)
+    except ValueError:
+        return {"error": "Invalid JSON from LLM"}
 
     ROLE_SKILL_CACHE[role_name] = skills
     return skills

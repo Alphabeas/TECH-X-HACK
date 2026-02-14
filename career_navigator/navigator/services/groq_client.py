@@ -1,5 +1,7 @@
 import os
 import re
+import json
+import ast
 from pathlib import Path
 import requests
 from dotenv import load_dotenv
@@ -48,6 +50,42 @@ def _extract_gemini_text(response_json):
     return _strip_code_fences(text)
 
 
+def parse_llm_json(response_text):
+    cleaned = _strip_code_fences(response_text)
+
+    candidates = [cleaned]
+    fenced_blocks = re.findall(r"```(?:json)?\s*([\s\S]*?)\s*```", response_text or "", flags=re.IGNORECASE)
+    candidates.extend(block.strip() for block in fenced_blocks if block and block.strip())
+
+    json_objects = re.findall(r"\{[\s\S]*\}", cleaned)
+    candidates.extend(obj.strip() for obj in json_objects if obj and obj.strip())
+
+    if cleaned.startswith("[") and cleaned.endswith("]"):
+        candidates.append(cleaned)
+
+    for candidate in candidates:
+        if not candidate:
+            continue
+
+        normalized = candidate.strip()
+        normalized = normalized.replace("\u201c", '"').replace("\u201d", '"').replace("\u2018", "'").replace("\u2019", "'")
+        normalized = re.sub(r",\s*([}\]])", r"\1", normalized)
+
+        try:
+            return json.loads(normalized)
+        except json.JSONDecodeError:
+            pass
+
+        try:
+            parsed = ast.literal_eval(normalized)
+            if isinstance(parsed, (dict, list)):
+                return parsed
+        except (SyntaxError, ValueError):
+            pass
+
+    raise ValueError("Invalid JSON from LLM")
+
+
 def _call_gemini(prompt, temperature):
     api_key = _get_gemini_key()
     if not api_key:
@@ -83,7 +121,7 @@ def _call_gemini(prompt, temperature):
 
     raise ValueError(f"Gemini API error: {last_error}")
 
-def call_groq(prompt, temperature=0.3):
+def call_llm(prompt, temperature=0.3):
     """
     Central LLM call function (Gemini first, then Groq fallback)
     """
@@ -95,10 +133,9 @@ def call_groq(prompt, temperature=0.3):
         if not groq_client:
             raise ValueError(str(gemini_error))
 
-    response = groq_client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-
-        messages=[
+    request_payload = {
+        "model": "llama-3.1-8b-instant",
+        "messages": [
             {
                 "role": "system",
                 "content": "You are a structured AI engine. Return only valid JSON. No explanations."
@@ -108,7 +145,19 @@ def call_groq(prompt, temperature=0.3):
                 "content": prompt
             }
         ],
-        temperature=temperature,
-    )
+        "temperature": temperature,
+    }
+
+    try:
+        response = groq_client.chat.completions.create(
+            **request_payload,
+            response_format={"type": "json_object"},
+        )
+    except Exception:
+        response = groq_client.chat.completions.create(**request_payload)
 
     return response.choices[0].message.content
+
+
+def call_groq(prompt, temperature=0.3):
+    return call_llm(prompt, temperature)

@@ -1,5 +1,4 @@
-import json
-from .groq_client import call_groq
+from .groq_client import call_llm, parse_llm_json
 
 
 def generate_30_day_plan(
@@ -60,10 +59,10 @@ def generate_30_day_plan(
     }}
     """
 
-    response = call_groq(prompt, temperature=0.2)
+    response = call_llm(prompt, temperature=0.2)
 
     try:
-        plan = json.loads(response)
+        plan = parse_llm_json(response)
 
         # Hard constraint: keep only first 4 weeks
         allowed_weeks = ["week_1", "week_2", "week_3", "week_4"]
@@ -71,5 +70,5 @@ def generate_30_day_plan(
 
         return cleaned_plan
 
-    except json.JSONDecodeError:
-        return {"error": "Invalid JSON from Groq", "raw_output": response}
+    except ValueError:
+        return {"error": "Invalid JSON from LLM", "raw_output": response}

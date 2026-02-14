@@ -1,4 +1,6 @@
+import os
 from datasets import load_dataset
+import pandas as pd
 
 _dataset = None
 _dataframe = None
@@ -7,8 +9,12 @@ def load_job_dataset():
     global _dataset, _dataframe
 
     if _dataframe is None:
-        _dataset = load_dataset("xanderios/linkedin-job-postings")
-        _dataframe = _dataset["train"].to_pandas()
+        dataset_id = os.getenv("JOB_DATASET_ID", "xanderios/job-postings")
+        try:
+            _dataset = load_dataset(dataset_id)
+            _dataframe = _dataset["train"].to_pandas()
+        except Exception:
+            _dataframe = pd.DataFrame(columns=["title", "description"])
 
     return _dataframe
 
